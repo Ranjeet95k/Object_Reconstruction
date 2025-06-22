@@ -1,3 +1,4 @@
+// Cube.kt
 package com.example.pic2vox.viewer
 
 import android.opengl.GLES20
@@ -8,11 +9,17 @@ import java.nio.FloatBuffer
 import java.nio.ShortBuffer
 import android.util.Log
 
-class Cube(x: Float, y: Float, z: Float, size: Float = 1.0f) {
+class Cube(
+    x: Float,
+    y: Float,
+    z: Float,
+    size: Float = 1.0f,
+    gridSize: Int
+) {
 
     private val vertexBuffer: FloatBuffer
     private val drawListBuffer: ShortBuffer
-    private val color = floatArrayOf(0.0f, 0.6f, 1.0f, 1.0f)
+    private val color: FloatArray
 
     private val modelMatrix = FloatArray(16)
     private val mvpMatrix = FloatArray(16)
@@ -76,6 +83,10 @@ class Cube(x: Float, y: Float, z: Float, size: Float = 1.0f) {
                 position(0)
             }
 
+        // Gradient color based on Z position (depth)
+        val normZ = (z + gridSize / 2f) / gridSize
+        color = floatArrayOf(1.0f - normZ, normZ, 0.5f, 1.0f)
+
         Matrix.setIdentityM(modelMatrix, 0)
         Matrix.translateM(modelMatrix, 0, x, y, z)
 
@@ -87,7 +98,6 @@ class Cube(x: Float, y: Float, z: Float, size: Float = 1.0f) {
             GLES20.glAttachShader(it, fragmentShader)
             GLES20.glLinkProgram(it)
 
-            // Optional: Check for linking errors
             val linkStatus = IntArray(1)
             GLES20.glGetProgramiv(it, GLES20.GL_LINK_STATUS, linkStatus, 0)
             if (linkStatus[0] == 0) {
@@ -128,7 +138,6 @@ class Cube(x: Float, y: Float, z: Float, size: Float = 1.0f) {
             GLES20.glShaderSource(shader, code)
             GLES20.glCompileShader(shader)
 
-            // Optional: Check compile status
             val compileStatus = IntArray(1)
             GLES20.glGetShaderiv(shader, GLES20.GL_COMPILE_STATUS, compileStatus, 0)
             if (compileStatus[0] == 0) {

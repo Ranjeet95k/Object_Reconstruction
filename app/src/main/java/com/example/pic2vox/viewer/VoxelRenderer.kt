@@ -48,7 +48,9 @@ class VoxelRenderer(private val grid: Array<Array<BooleanArray>>) : GLSurfaceVie
                             Cube(
                                 x - offsetX,
                                 y - offsetY,
-                                z - offsetZ
+                                z - offsetZ,
+                                size = 1.0f,
+                                gridSize = sizeZ // pass total depth for color gradient
                             )
                         )
                     }
