@@ -1,4 +1,3 @@
-// File: VoxelRenderer.kt
 package com.example.pic2vox.viewer
 
 import android.opengl.GLES20
@@ -8,55 +7,59 @@ import android.view.ScaleGestureDetector
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
-data class VoxelCube(val cube: Cube, val x: Int, val y: Int, val z: Int)
-
 class VoxelRenderer(private val grid: Array<Array<BooleanArray>>) : GLSurfaceView.Renderer {
-
-    enum class SliceMode { FULL, XY, XZ, YZ }
 
     var angleX = 0f
     var angleY = 0f
-    var zoom = 100f
-    var showGrid = true
-    var sliceMode = SliceMode.FULL
-    var sliceIndex = 16
+    var zoom = 1f  // Scale multiplier for camera distance
 
     val scaleListener = object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
         override fun onScale(detector: ScaleGestureDetector): Boolean {
             zoom /= detector.scaleFactor
-            zoom = zoom.coerceIn(30f, 300f)
+            zoom = zoom.coerceIn(0.5f, 5f)
             return true
         }
     }
 
+    private val cubes = mutableListOf<Cube>()
     private val projectionMatrix = FloatArray(16)
     private val viewMatrix = FloatArray(16)
     private val vpMatrix = FloatArray(16)
 
-    private val allCubes = mutableListOf<VoxelCube>()
+    private var gridSizeX = 0
+    private var gridSizeY = 0
+    private var gridSizeZ = 0
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         GLES20.glClearColor(0.1f, 0.1f, 0.15f, 1f)
         GLES20.glEnable(GLES20.GL_DEPTH_TEST)
         GLES20.glEnable(GLES20.GL_CULL_FACE)
 
-        val sizeX = grid.size
-        val sizeY = grid[0].size
-        val sizeZ = grid[0][0].size
+        gridSizeX = grid.size
+        gridSizeY = grid[0].size
+        gridSizeZ = grid[0][0].size
 
-        val offsetX = sizeX / 2f
-        val offsetY = sizeY / 2f
-        val offsetZ = sizeZ / 2f
+        val offsetX = gridSizeX / 2f
+        val offsetY = gridSizeY / 2f
+        val offsetZ = gridSizeZ / 2f
 
         for (x in grid.indices) {
             for (y in grid[x].indices) {
                 for (z in grid[x][y].indices) {
                     if (grid[x][y][z]) {
-                        val cube = Cube(
-                            x - offsetX, y - offsetY, z - offsetZ,
-                            size = 1.0f, gridSize = sizeZ
+                        cubes.add(
+                            Cube(
+                                x - offsetX,
+                                y - offsetY,
+                                z - offsetZ,
+                                size = 1.0f,
+                                gridSize = gridSizeZ
+                            ).apply {
+                                this.gridX = x
+                                this.gridY = y
+                                this.gridZ = z
+                            }
                         )
-                        allCubes.add(VoxelCube(cube, x, y, z))
                     }
                 }
             }
@@ -72,7 +75,14 @@ class VoxelRenderer(private val grid: Array<Array<BooleanArray>>) : GLSurfaceVie
     override fun onDrawFrame(gl: GL10?) {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT)
 
-        Matrix.setLookAtM(viewMatrix, 0, 0f, 0f, zoom, 0f, 0f, 0f, 0f, 1f, 0f)
+        val maxDim = maxOf(gridSizeX, gridSizeY, gridSizeZ).toFloat()
+        val cameraDistance = maxDim * 1.5f / zoom
+
+        Matrix.setLookAtM(viewMatrix, 0,
+            0f, 0f, cameraDistance,
+            0f, 0f, 0f,
+            0f, 1f, 0f
+        )
 
         val rotationX = FloatArray(16)
         val rotationY = FloatArray(16)
@@ -86,34 +96,8 @@ class VoxelRenderer(private val grid: Array<Array<BooleanArray>>) : GLSurfaceVie
         Matrix.multiplyMM(tempMatrix, 0, viewMatrix, 0, rotationMatrix, 0)
         Matrix.multiplyMM(vpMatrix, 0, projectionMatrix, 0, tempMatrix, 0)
 
-        val filteredCubes = when (sliceMode) {
-            SliceMode.FULL -> allCubes
-            SliceMode.XY -> allCubes.filter { it.z == sliceIndex }
-            SliceMode.XZ -> allCubes.filter { it.y == sliceIndex }
-            SliceMode.YZ -> allCubes.filter { it.x == sliceIndex }
-        }
-
-        for (voxel in filteredCubes) {
-            if (showGrid) voxel.cube.draw(vpMatrix)
-        }
-    }
-
-    fun resetView() {
-        angleX = 0f
-        angleY = 0f
-        zoom = 100f
-    }
-
-    fun toggleGrid() {
-        showGrid = !showGrid
-    }
-
-    fun nextSliceMode() {
-        sliceMode = when (sliceMode) {
-            SliceMode.FULL -> SliceMode.XY
-            SliceMode.XY -> SliceMode.XZ
-            SliceMode.XZ -> SliceMode.YZ
-            SliceMode.YZ -> SliceMode.FULL
+        for (cube in cubes) {
+            cube.draw(vpMatrix)
         }
     }
 }

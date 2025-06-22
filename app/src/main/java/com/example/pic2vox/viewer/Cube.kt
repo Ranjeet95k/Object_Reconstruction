@@ -1,4 +1,3 @@
-// Cube.kt
 package com.example.pic2vox.viewer
 
 import android.opengl.GLES20
@@ -16,6 +15,11 @@ class Cube(
     size: Float = 1.0f,
     gridSize: Int
 ) {
+
+    // Exposed for slicing operations
+    var gridX: Int = 0
+    var gridY: Int = 0
+    var gridZ: Int = 0
 
     private val vertexBuffer: FloatBuffer
     private val drawListBuffer: ShortBuffer

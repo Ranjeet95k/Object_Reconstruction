@@ -1,4 +1,3 @@
-// File: VoxelRenderActivity.kt
 package com.example.pic2vox.viewer
 
 import android.app.Activity
@@ -9,6 +8,7 @@ import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.widget.Button
 import android.widget.FrameLayout
+import android.widget.LinearLayout
 
 class VoxelRenderActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,7 +19,9 @@ class VoxelRenderActivity : Activity() {
             finish()
             return
         }
+
         val renderer = VoxelRenderer(voxelGrid)
+
         val glView = object : GLSurfaceView(this) {
             private val scaleDetector = ScaleGestureDetector(context, renderer.scaleListener)
             private var previousX = 0f
@@ -54,47 +56,30 @@ class VoxelRenderActivity : Activity() {
         frameLayout.addView(glView)
 
         val resetButton = Button(this).apply {
-            text = "Reset"
+            text = "🔄 Reset View"
             setOnClickListener {
                 renderer.angleX = 0f
                 renderer.angleY = 0f
-                renderer.zoom = 100f
+                renderer.zoom = 1f
                 glView.requestRender()
             }
         }
 
-        val toggleGridButton = Button(this).apply {
-            text = "Toggle Grid"
-            setOnClickListener {
-                renderer.showGrid = !renderer.showGrid
-                glView.requestRender()
-            }
+        val buttonLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            setPadding(0, 0, 0, 48)
+            addView(resetButton)
         }
 
-        val sliceButton = Button(this).apply {
-            text = "Slice XY/XZ/YZ/Off"
-            setOnClickListener {
-                renderer.nextSliceMode()
-                glView.requestRender()
-            }
-        }
-
-        val layoutParams = FrameLayout.LayoutParams(
+        val buttonParams = FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.WRAP_CONTENT,
             FrameLayout.LayoutParams.WRAP_CONTENT
         ).apply {
-            gravity = Gravity.TOP or Gravity.END
-            topMargin = 32
-            marginEnd = 32
+            gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
         }
 
-        val controlsLayout = FrameLayout(this).apply {
-            addView(resetButton)
-            addView(toggleGridButton.apply { translationY = 120f })
-            addView(sliceButton.apply { translationY = 240f })
-        }
-
-        frameLayout.addView(controlsLayout, layoutParams)
+        frameLayout.addView(buttonLayout, buttonParams)
         setContentView(frameLayout)
     }
 }
