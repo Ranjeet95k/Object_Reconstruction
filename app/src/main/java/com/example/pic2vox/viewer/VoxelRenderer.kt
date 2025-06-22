@@ -1,3 +1,4 @@
+// File: VoxelRenderer.kt
 package com.example.pic2vox.viewer
 
 import android.opengl.GLES20
@@ -7,11 +8,18 @@ import android.view.ScaleGestureDetector
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
+data class VoxelCube(val cube: Cube, val x: Int, val y: Int, val z: Int)
+
 class VoxelRenderer(private val grid: Array<Array<BooleanArray>>) : GLSurfaceView.Renderer {
+
+    enum class SliceMode { FULL, XY, XZ, YZ }
 
     var angleX = 0f
     var angleY = 0f
-    var zoom = 100f  // Positive zoom distance
+    var zoom = 100f
+    var showGrid = true
+    var sliceMode = SliceMode.FULL
+    var sliceIndex = 16
 
     val scaleListener = object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
         override fun onScale(detector: ScaleGestureDetector): Boolean {
@@ -21,17 +29,17 @@ class VoxelRenderer(private val grid: Array<Array<BooleanArray>>) : GLSurfaceVie
         }
     }
 
-    private val cubes = mutableListOf<Cube>()
     private val projectionMatrix = FloatArray(16)
     private val viewMatrix = FloatArray(16)
     private val vpMatrix = FloatArray(16)
+
+    private val allCubes = mutableListOf<VoxelCube>()
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         GLES20.glClearColor(0.1f, 0.1f, 0.15f, 1f)
         GLES20.glEnable(GLES20.GL_DEPTH_TEST)
         GLES20.glEnable(GLES20.GL_CULL_FACE)
 
-        // Properly center the voxel grid
         val sizeX = grid.size
         val sizeY = grid[0].size
         val sizeZ = grid[0][0].size
@@ -44,15 +52,11 @@ class VoxelRenderer(private val grid: Array<Array<BooleanArray>>) : GLSurfaceVie
             for (y in grid[x].indices) {
                 for (z in grid[x][y].indices) {
                     if (grid[x][y][z]) {
-                        cubes.add(
-                            Cube(
-                                x - offsetX,
-                                y - offsetY,
-                                z - offsetZ,
-                                size = 1.0f,
-                                gridSize = sizeZ // pass total depth for color gradient
-                            )
+                        val cube = Cube(
+                            x - offsetX, y - offsetY, z - offsetZ,
+                            size = 1.0f, gridSize = sizeZ
                         )
+                        allCubes.add(VoxelCube(cube, x, y, z))
                     }
                 }
             }
@@ -68,7 +72,6 @@ class VoxelRenderer(private val grid: Array<Array<BooleanArray>>) : GLSurfaceVie
     override fun onDrawFrame(gl: GL10?) {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT)
 
-        // Camera looking toward origin from zoom distance
         Matrix.setLookAtM(viewMatrix, 0, 0f, 0f, zoom, 0f, 0f, 0f, 0f, 1f, 0f)
 
         val rotationX = FloatArray(16)
@@ -83,8 +86,34 @@ class VoxelRenderer(private val grid: Array<Array<BooleanArray>>) : GLSurfaceVie
         Matrix.multiplyMM(tempMatrix, 0, viewMatrix, 0, rotationMatrix, 0)
         Matrix.multiplyMM(vpMatrix, 0, projectionMatrix, 0, tempMatrix, 0)
 
-        for (cube in cubes) {
-            cube.draw(vpMatrix)
+        val filteredCubes = when (sliceMode) {
+            SliceMode.FULL -> allCubes
+            SliceMode.XY -> allCubes.filter { it.z == sliceIndex }
+            SliceMode.XZ -> allCubes.filter { it.y == sliceIndex }
+            SliceMode.YZ -> allCubes.filter { it.x == sliceIndex }
+        }
+
+        for (voxel in filteredCubes) {
+            if (showGrid) voxel.cube.draw(vpMatrix)
+        }
+    }
+
+    fun resetView() {
+        angleX = 0f
+        angleY = 0f
+        zoom = 100f
+    }
+
+    fun toggleGrid() {
+        showGrid = !showGrid
+    }
+
+    fun nextSliceMode() {
+        sliceMode = when (sliceMode) {
+            SliceMode.FULL -> SliceMode.XY
+            SliceMode.XY -> SliceMode.XZ
+            SliceMode.XZ -> SliceMode.YZ
+            SliceMode.YZ -> SliceMode.FULL
         }
     }
 }

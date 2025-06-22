@@ -1,12 +1,14 @@
-
 // File: VoxelRenderActivity.kt
 package com.example.pic2vox.viewer
 
 import android.app.Activity
 import android.opengl.GLSurfaceView
 import android.os.Bundle
+import android.view.Gravity
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
+import android.widget.Button
+import android.widget.FrameLayout
 
 class VoxelRenderActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -14,7 +16,7 @@ class VoxelRenderActivity : Activity() {
 
         val voxelGrid = VoxelHolder.grid
         if (voxelGrid == null) {
-            finish() // or show error
+            finish()
             return
         }
         val renderer = VoxelRenderer(voxelGrid)
@@ -25,7 +27,6 @@ class VoxelRenderActivity : Activity() {
 
             override fun onTouchEvent(event: MotionEvent): Boolean {
                 scaleDetector.onTouchEvent(event)
-
                 if (event.pointerCount == 1 && event.action == MotionEvent.ACTION_MOVE) {
                     val dx = event.x - previousX
                     val dy = event.y - previousY
@@ -33,12 +34,9 @@ class VoxelRenderActivity : Activity() {
                     renderer.angleY += dx * 0.5f
                     requestRender()
                 }
-
                 previousX = event.x
                 previousY = event.y
-
                 performClick()
-
                 return true
             }
 
@@ -46,15 +44,57 @@ class VoxelRenderActivity : Activity() {
                 super.performClick()
                 return true
             }
-
         }
-
 
         glView.setEGLContextClientVersion(2)
         glView.setRenderer(renderer)
         glView.renderMode = GLSurfaceView.RENDERMODE_WHEN_DIRTY
 
-        setContentView(glView)
-    }
+        val frameLayout = FrameLayout(this)
+        frameLayout.addView(glView)
 
+        val resetButton = Button(this).apply {
+            text = "Reset"
+            setOnClickListener {
+                renderer.angleX = 0f
+                renderer.angleY = 0f
+                renderer.zoom = 100f
+                glView.requestRender()
+            }
+        }
+
+        val toggleGridButton = Button(this).apply {
+            text = "Toggle Grid"
+            setOnClickListener {
+                renderer.showGrid = !renderer.showGrid
+                glView.requestRender()
+            }
+        }
+
+        val sliceButton = Button(this).apply {
+            text = "Slice XY/XZ/YZ/Off"
+            setOnClickListener {
+                renderer.nextSliceMode()
+                glView.requestRender()
+            }
+        }
+
+        val layoutParams = FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.WRAP_CONTENT,
+            FrameLayout.LayoutParams.WRAP_CONTENT
+        ).apply {
+            gravity = Gravity.TOP or Gravity.END
+            topMargin = 32
+            marginEnd = 32
+        }
+
+        val controlsLayout = FrameLayout(this).apply {
+            addView(resetButton)
+            addView(toggleGridButton.apply { translationY = 120f })
+            addView(sliceButton.apply { translationY = 240f })
+        }
+
+        frameLayout.addView(controlsLayout, layoutParams)
+        setContentView(frameLayout)
+    }
 }
