@@ -84,45 +84,54 @@ class MainActivity : ComponentActivity() {
                                             return@launch
                                         }
 
-                                        val modelRunner = ModelRunner(context)
-                                        val voxelTensor = modelRunner.runInference(capturedImages)
-                                        val shape = voxelTensor.shape()
-                                        Log.d("VoxelOutput", "Voxel shape: ${shape.contentToString()}")
-
-                                        val voxelData = voxelTensor.dataAsFloatArray
-                                        val gridSize = 32
-                                        val threshold = 0.4f
-
-                                        val voxelGrid = Array(gridSize) { Array(gridSize) { BooleanArray(gridSize) } }
-                                        var index = 0
-                                        for (x in 0 until gridSize) {
-                                            for (y in 0 until gridSize) {
-                                                for (z in 0 until gridSize) {
-                                                    voxelGrid[x][y][z] = voxelData[index++] > threshold
-                                                }
-                                            }
-                                        }
-
-                                        withContext(Dispatchers.Main) {
-//                                            setContent {
-//                                                Pic2voxTheme {
-//                                                    VoxelSliceViewer(voxelGrid = voxelGrid)
+//                                        val modelRunner = ModelRunner(context)
+//                                        val voxelTensor = modelRunner.runInference(capturedImages)
+//                                        val shape = voxelTensor.shape()
+//                                        Log.d("VoxelOutput", "Voxel shape: ${shape.contentToString()}")
+//
+//                                        val voxelData = voxelTensor.dataAsFloatArray
+//                                        val gridSize = 32
+//                                        val threshold = 0.4f
+//
+//                                        val voxelGrid = Array(gridSize) { Array(gridSize) { BooleanArray(gridSize) } }
+//                                        var index = 0
+//                                        for (x in 0 until gridSize) {
+//                                            for (y in 0 until gridSize) {
+//                                                for (z in 0 until gridSize) {
+//                                                    voxelGrid[x][y][z] = voxelData[index++] > threshold
 //                                                }
 //                                            }
-
-                                            VoxelHolder.grid = voxelGrid
-                                            val intent = Intent(context, VoxelRenderActivity::class.java)
-                                            startActivity(intent)
-
-
+//                                        }
+//
+//                                        withContext(Dispatchers.Main) {
+////                                            setContent {
+////                                                Pic2voxTheme {
+////                                                    VoxelSliceViewer(voxelGrid = voxelGrid)
+////                                                }
+////                                            }
+//
 //                                            VoxelHolder.grid = voxelGrid
 //                                            val intent = Intent(context, VoxelRenderActivity::class.java)
 //                                            startActivity(intent)
-                                        }
+//
+//
+////                                            VoxelHolder.grid = voxelGrid
+////                                            val intent = Intent(context, VoxelRenderActivity::class.java)
+////                                            startActivity(intent)
+//                                        }
+//
+//
+//
+//                                        modelRunner.release()
 
 
+                                        val modelRunner = ModelRunner(context)
+                                        val voxelTensor = modelRunner.runFullPipeline(capturedImages)
 
+                                        val shape = voxelTensor.shape()
+                                        Log.d("EncoderDecoderTest", "raw tensor shape: ${shape.contentToString()}")
                                         modelRunner.release()
+
                                     } catch (e: Exception) {
                                         Log.e("ModelRunner", "Inference failed", e)
                                         withContext(Dispatchers.Main) {
