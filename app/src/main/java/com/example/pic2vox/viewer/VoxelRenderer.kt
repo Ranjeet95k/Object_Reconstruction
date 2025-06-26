@@ -1,5 +1,5 @@
 
-// Updated: VoxelRenderer.kt
+// VoxelRenderer.kt
 package com.example.pic2vox.viewer
 
 import android.opengl.GLES20

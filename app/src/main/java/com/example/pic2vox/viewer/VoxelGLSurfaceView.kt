@@ -1,5 +1,5 @@
 
-// Updated: VoxelGLSurfaceView.kt
+// VoxelGLSurfaceView.kt
 package com.example.pic2vox.viewer
 
 import android.content.Context

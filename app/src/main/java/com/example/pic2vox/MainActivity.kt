@@ -101,7 +101,7 @@ class MainActivity : ComponentActivity() {
                                         }
 
                                         val gridSize = shape[1].toInt()
-                                        val threshold = 0.3f
+                                        val threshold = 0.2f
                                         val voxelData = voxelTensor.dataAsFloatArray
 
                                         val voxelGrid = Array(gridSize) {
@@ -177,7 +177,7 @@ class MainActivity : ComponentActivity() {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .background(Color.Black.copy(alpha = 0.3f)),
+                                .background(Color.Black.copy(alpha = 0.5f)),
                             contentAlignment = Alignment.Center
                         ) {
                             CircularProgressIndicator()
