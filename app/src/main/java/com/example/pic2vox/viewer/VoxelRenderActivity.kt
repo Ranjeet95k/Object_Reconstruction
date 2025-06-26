@@ -7,9 +7,9 @@ import android.os.Bundle
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
-import android.widget.Button
-import android.widget.FrameLayout
-import android.widget.TextView
+import android.widget.*
+import android.widget.LinearLayout.LayoutParams
+import android.widget.Toast
 
 class VoxelRenderActivity : Activity() {
     @SuppressLint("SetTextI18n")
@@ -59,6 +59,29 @@ class VoxelRenderActivity : Activity() {
         val layout = FrameLayout(this)
         layout.addView(glView)
 
+        // Time taken text
+        val timeTaken = intent.getLongExtra("processing_time", 0L)
+        val timeTextView = TextView(this).apply {
+            text = "Time taken: ${(timeTaken / 1000f)} s"
+            setTextColor(android.graphics.Color.WHITE)
+            textSize = 16f
+        }
+
+        val timeParams = FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.WRAP_CONTENT,
+            FrameLayout.LayoutParams.WRAP_CONTENT
+        ).apply {
+            gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+            bottomMargin = 130  // Increased to move above buttons
+        }
+        layout.addView(timeTextView, timeParams)
+
+        // Horizontal button layout
+        val buttonLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+        }
+
         val resetButton = Button(this).apply {
             text = "Reset View"
             setOnClickListener {
@@ -69,33 +92,38 @@ class VoxelRenderActivity : Activity() {
             }
         }
 
-        val buttonParams = FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.WRAP_CONTENT,
-            FrameLayout.LayoutParams.WRAP_CONTENT
+        val downloadButton = Button(this).apply {
+            text = "Download .ply"
+            setOnClickListener {
+                val success = PLYExporter.exportToPLY(this@VoxelRenderActivity, voxelGrid)
+                Toast.makeText(
+                    this@VoxelRenderActivity,
+                    if (success) "PLY file saved!" else "Export failed",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+
+        // Add buttons with spacing
+        val buttonSpacing = LayoutParams(
+            LayoutParams.WRAP_CONTENT,
+            LayoutParams.WRAP_CONTENT
         ).apply {
-            gravity = Gravity.TOP or Gravity.END
-            topMargin = 24
-            rightMargin = 24
+            setMargins(20, 0, 20, 0) // Horizontal spacing
         }
 
-        layout.addView(resetButton, buttonParams)
+        buttonLayout.addView(resetButton, buttonSpacing)
+        buttonLayout.addView(downloadButton, buttonSpacing)
 
-        val timeTaken = intent.getLongExtra("processing_time", 0L)
-        val timeTextView = TextView(this).apply {
-            text = "Time taken: ${(timeTaken/1000).toFloat()} s"
-            setTextColor(android.graphics.Color.WHITE)
-            textSize = 16f
-        }
-
-        val timeParams = FrameLayout.LayoutParams(
+        val frameParams = FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.WRAP_CONTENT,
             FrameLayout.LayoutParams.WRAP_CONTENT
         ).apply {
             gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
-            bottomMargin = 24
+            bottomMargin = 40  // Leave room for time text above
         }
 
-        layout.addView(timeTextView, timeParams)
+        layout.addView(buttonLayout, frameParams)
 
         setContentView(layout)
     }

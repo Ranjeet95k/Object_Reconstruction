@@ -47,6 +47,11 @@ class MainActivity : ComponentActivity() {
             requestPermissionLauncher.launch(Manifest.permission.CAMERA)
         }
 
+        if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf(android.Manifest.permission.WRITE_EXTERNAL_STORAGE), 1)
+        }
+
+
         setContent {
             val context = LocalContext.current
             var capturedImages by remember { mutableStateOf<List<Bitmap>>(emptyList()) }
