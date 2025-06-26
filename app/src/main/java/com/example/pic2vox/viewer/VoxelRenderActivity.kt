@@ -1,5 +1,5 @@
 
-// File: VoxelRenderActivity.kt
+// Updated: VoxelRenderActivity.kt
 package com.example.pic2vox.viewer
 
 import android.app.Activity
@@ -49,12 +49,10 @@ class VoxelRenderActivity : Activity() {
 
         }
 
-
         glView.setEGLContextClientVersion(2)
         glView.setRenderer(renderer)
         glView.renderMode = GLSurfaceView.RENDERMODE_WHEN_DIRTY
 
         setContentView(glView)
     }
-
 }

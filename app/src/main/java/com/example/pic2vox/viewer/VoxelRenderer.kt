@@ -1,15 +1,15 @@
-// VoxelRenderer.kt
+
+// Updated: VoxelRenderer.kt
 package com.example.pic2vox.viewer
 
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
 import android.opengl.Matrix
 import android.view.ScaleGestureDetector
-import org.pytorch.Tensor
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
-class VoxelRenderer(private val grids: Array<Array<Array<FloatArray>>>) : GLSurfaceView.Renderer {
+class VoxelRenderer(private val grid: Array<Array<BooleanArray>>) : GLSurfaceView.Renderer {
 
     var angleX = 0f
     var angleY = 0f
@@ -33,8 +33,6 @@ class VoxelRenderer(private val grids: Array<Array<Array<FloatArray>>>) : GLSurf
         GLES20.glEnable(GLES20.GL_DEPTH_TEST)
         GLES20.glEnable(GLES20.GL_CULL_FACE)
 
-        val grid = grids[0] // Visualize the first view
-
         val sizeX = grid.size
         val sizeY = grid[0].size
         val sizeZ = grid[0][0].size
@@ -46,7 +44,7 @@ class VoxelRenderer(private val grids: Array<Array<Array<FloatArray>>>) : GLSurf
         for (x in grid.indices) {
             for (y in grid[x].indices) {
                 for (z in grid[x][y].indices) {
-                    if (grid[x][y][z] > 0.5f) {
+                    if (grid[x][y][z]) {
                         cubes.add(Cube(x - offsetX, y - offsetY, z - offsetZ))
                     }
                 }
@@ -79,28 +77,6 @@ class VoxelRenderer(private val grids: Array<Array<Array<FloatArray>>>) : GLSurf
 
         for (cube in cubes) {
             cube.draw(vpMatrix)
-        }
-    }
-}
-
-// Tensor to voxel grid conversion utility
-fun tensorToVoxelArray(tensor: Tensor): Array<Array<Array<FloatArray>>> {
-    val shape = tensor.shape() // [B, D, H, W]
-    val b = shape[0].toInt()
-    val d = shape[1].toInt()
-    val h = shape[2].toInt()
-    val w = shape[3].toInt()
-
-    val data = tensor.dataAsFloatArray
-    var index = 0
-
-    return Array(b) {
-        Array(d) {
-            Array(h) {
-                FloatArray(w) {
-                    data[index++]
-                }
-            }
         }
     }
 }
