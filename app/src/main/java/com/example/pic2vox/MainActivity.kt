@@ -51,10 +51,11 @@ class MainActivity : ComponentActivity() {
             val context = LocalContext.current
             var capturedImages by remember { mutableStateOf<List<Bitmap>>(emptyList()) }
             var showProgress by remember { mutableStateOf(false) }
+            var processingTime by remember { mutableStateOf(0L) }
 
             Pic2voxTheme {
                 if (cameraPermissionGranted) {
-                    Box(modifier = Modifier.fillMaxSize()) {
+                    Column(modifier = Modifier.fillMaxSize()) {
                         VoxelCaptureScreen(
                             capturedImages = capturedImages,
                             onCapture = { manager ->
@@ -68,6 +69,7 @@ class MainActivity : ComponentActivity() {
                             onReconstruct = {
                                 CoroutineScope(Dispatchers.IO).launch {
                                     showProgress = true
+                                    val startTime = System.currentTimeMillis()
                                     try {
                                         if (capturedImages.isEmpty()) {
                                             withContext(Dispatchers.Main) {
@@ -99,7 +101,7 @@ class MainActivity : ComponentActivity() {
                                         }
 
                                         val gridSize = shape[1].toInt()
-                                        val threshold = 0.5f
+                                        val threshold = 0.3f
                                         val voxelData = voxelTensor.dataAsFloatArray
 
                                         val voxelGrid = Array(gridSize) {
@@ -120,9 +122,13 @@ class MainActivity : ComponentActivity() {
                                         val count = voxelGrid.sumOf { it.sumOf { row -> row.count { it } } }
                                         Log.d("VoxelRender", "Active voxels: $count")
 
+                                        val endTime = System.currentTimeMillis()
+                                        processingTime = endTime - startTime
+
                                         withContext(Dispatchers.Main) {
                                             VoxelHolder.grid = voxelGrid
                                             val intent = Intent(context, VoxelRenderActivity::class.java)
+                                            intent.putExtra("processing_time", processingTime)
                                             startActivity(intent)
                                         }
 
@@ -146,15 +152,35 @@ class MainActivity : ComponentActivity() {
                             }
                         )
 
-                        if (showProgress) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(Color.Black.copy(alpha = 0.5f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator()
-                            }
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = if (processingTime > 0) "Time taken: ${processingTime} ms" else "",
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            color = Color.White
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Button(
+                            onClick = {
+                                capturedImages = emptyList()
+                                processingTime = 0L
+                            },
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        ) {
+                            Text("Reset")
+                        }
+                    }
+
+                    if (showProgress) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.Black.copy(alpha = 0.3f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
                         }
                     }
                 } else {
