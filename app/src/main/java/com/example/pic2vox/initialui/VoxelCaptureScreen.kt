@@ -15,7 +15,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.pic2vox.camera.CameraCaptureManager
 import com.example.pic2vox.camera.CameraPreviewView
 
@@ -24,10 +23,11 @@ fun VoxelCaptureScreen(
     capturedImages: List<Bitmap>,
     onCapture: (CameraCaptureManager) -> Unit,
     onClear: () -> Unit,
-    onReconstruct: () -> Unit
+    onReconstruct: () -> Unit,
+    onSelectGallery: () -> Unit
 ) {
     val context = LocalContext.current
-    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     var cameraManager by remember { mutableStateOf<CameraCaptureManager?>(null) }
 
     Column(
@@ -70,15 +70,22 @@ fun VoxelCaptureScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            Button(
-                onClick = {
-                    cameraManager?.let { onCapture(it) }
-                }
-            ) {
+            Button(onClick = { cameraManager?.let { onCapture(it) } }) {
                 Text("Capture")
             }
             Button(onClick = onClear, colors = ButtonDefaults.buttonColors(containerColor = Color.Red)) {
                 Text("Clear")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            Button(onClick = onSelectGallery) {
+                Text("Select from Gallery")
             }
             if (capturedImages.isNotEmpty()) {
                 Button(onClick = onReconstruct) {

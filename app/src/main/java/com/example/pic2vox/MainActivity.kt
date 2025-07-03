@@ -1,10 +1,14 @@
 package com.example.pic2vox
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -30,6 +34,7 @@ import kotlinx.coroutines.*
 class MainActivity : ComponentActivity() {
 
     private var cameraPermissionGranted by mutableStateOf(false)
+    private val capturedImages = mutableStateListOf<Bitmap>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,14 +52,28 @@ class MainActivity : ComponentActivity() {
             requestPermissionLauncher.launch(Manifest.permission.CAMERA)
         }
 
-        if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(arrayOf(android.Manifest.permission.WRITE_EXTERNAL_STORAGE), 1)
+        if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 1)
         }
 
+        val pickImagesLauncher = registerForActivityResult(
+            ActivityResultContracts.GetMultipleContents()
+        ) { uris ->
+            val contentResolver = applicationContext.contentResolver
+            val resizedBitmaps = uris.take(3).mapNotNull { uri ->
+                try {
+                    val original = MediaStore.Images.Media.getBitmap(contentResolver, uri)
+                    Bitmap.createScaledBitmap(original, 224, 224, true)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    null
+                }
+            }
+            capturedImages.addAll(resizedBitmaps)
+        }
 
         setContent {
             val context = LocalContext.current
-            var capturedImages by remember { mutableStateOf<List<Bitmap>>(emptyList()) }
             var showProgress by remember { mutableStateOf(false) }
             var processingTime by remember { mutableStateOf(0L) }
 
@@ -65,11 +84,14 @@ class MainActivity : ComponentActivity() {
                             capturedImages = capturedImages,
                             onCapture = { manager ->
                                 manager.captureImage { bitmap ->
-                                    capturedImages = capturedImages + bitmap
+                                    capturedImages.add(bitmap)
                                 }
                             },
                             onClear = {
-                                capturedImages = emptyList()
+                                capturedImages.clear()
+                            },
+                            onSelectGallery = {
+                                pickImagesLauncher.launch("image/*")
                             },
                             onReconstruct = {
                                 CoroutineScope(Dispatchers.IO).launch {
@@ -93,7 +115,7 @@ class MainActivity : ComponentActivity() {
                                         val shape = voxelTensor.shape()
                                         Log.d("VoxelReconstruction", "Final voxel tensor shape: ${shape.contentToString()}")
 
-                                        if (shape.size != 4 || shape[0].toInt() != 1 || shape[1].toInt() != 32 || shape[2].toInt() != 32 || shape[3].toInt() != 32) {
+                                        if (shape.size != 4 || shape[0] != 1L || shape[1] != 32L || shape[2] != 32L || shape[3] != 32L) {
                                             withContext(Dispatchers.Main) {
                                                 Toast.makeText(
                                                     context,
@@ -105,7 +127,7 @@ class MainActivity : ComponentActivity() {
                                             return@launch
                                         }
 
-                                        val gridSize = shape[1].toInt()
+                                        val gridSize = 32
                                         val threshold = 0.2f
                                         val voxelData = voxelTensor.dataAsFloatArray
 
@@ -123,9 +145,6 @@ class MainActivity : ComponentActivity() {
                                                 }
                                             }
                                         }
-
-                                        val count = voxelGrid.sumOf { it.sumOf { row -> row.count { it } } }
-                                        Log.d("VoxelRender", "Active voxels: $count")
 
                                         val endTime = System.currentTimeMillis()
                                         processingTime = endTime - startTime
@@ -169,7 +188,7 @@ class MainActivity : ComponentActivity() {
 
                         Button(
                             onClick = {
-                                capturedImages = emptyList()
+                                capturedImages.clear()
                                 processingTime = 0L
                             },
                             modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -202,16 +221,4 @@ fun PermissionDeniedScreen() {
         text = "Camera permission is required to use this feature.",
         modifier = Modifier.padding(16.dp)
     )
-}
-
-private fun renderVoxelGrid(voxelGrid: Array<Array<BooleanArray>>) {
-    var count = 0
-    for (x in voxelGrid.indices) {
-        for (y in voxelGrid[x].indices) {
-            for (z in voxelGrid[x][y].indices) {
-                if (voxelGrid[x][y][z]) count++
-            }
-        }
-    }
-    Log.d("VoxelRender", "Active voxels: $count")
 }
