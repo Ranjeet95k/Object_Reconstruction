@@ -9,9 +9,10 @@ import java.nio.FloatBuffer
 import java.nio.ShortBuffer
 import android.util.Log
 
-class Cube(x: Float, y: Float, z: Float, size: Float = 1.0f, val color: FloatArray = floatArrayOf(0f, 0.6f, 1f, 1f)) {
+class Cube(x: Float, y: Float, z: Float, size: Float = 1.0f) {
     private val vertexBuffer: FloatBuffer
     private val drawListBuffer: ShortBuffer
+    private val colorBuffer: FloatBuffer
 
     private val modelMatrix = FloatArray(16)
     private val mvpMatrix = FloatArray(16)
@@ -19,14 +20,17 @@ class Cube(x: Float, y: Float, z: Float, size: Float = 1.0f, val color: FloatArr
     private val vertexShaderCode = """
         uniform mat4 uMVPMatrix;
         attribute vec4 vPosition;
+        attribute vec4 aColor;
+        varying vec4 vColor;
         void main() {
             gl_Position = uMVPMatrix * vPosition;
+            vColor = aColor;
         }
     """.trimIndent()
 
     private val fragmentShaderCode = """
         precision mediump float;
-        uniform vec4 vColor;
+        varying vec4 vColor;
         void main() {
             gl_FragColor = vColor;
         }
@@ -38,24 +42,44 @@ class Cube(x: Float, y: Float, z: Float, size: Float = 1.0f, val color: FloatArr
         val half = size / 2f
 
         val cubeCoords = floatArrayOf(
-            -half,  half,  half,
-            half,  half,  half,
-            -half, -half,  half,
-            half, -half,  half,
-            -half,  half, -half,
-            half,  half, -half,
-            -half, -half, -half,
-            half, -half, -half
+            -half,  half,  half,   // front top left     0
+            half,  half,  half,   // front top right    1
+            -half, -half,  half,   // front bottom left  2
+            half, -half,  half,   // front bottom right 3
+            -half,  half, -half,   // back top left      4
+            half,  half, -half,   // back top right     5
+            -half, -half, -half,   // back bottom left   6
+            half, -half, -half    // back bottom right  7
         )
 
-        val drawOrder = shortArrayOf(
-            0, 1, 2, 1, 3, 2,
-            4, 5, 6, 5, 7, 6,
-            4, 0, 6, 0, 2, 6,
-            1, 5, 3, 5, 7, 3,
-            4, 5, 0, 5, 1, 0,
-            2, 3, 6, 3, 7, 6
+        val faceColors = arrayOf(
+            floatArrayOf(1f, 0.5f, 0.5f, 1f), // front - red
+            floatArrayOf(0.5f, 1f, 0.5f, 1f), // back - green
+            floatArrayOf(0.5f, 0.5f, 1f, 1f), // left - blue
+            floatArrayOf(1f, 1f, 0.5f, 1f),   // right - yellow
+            floatArrayOf(1f, 0.5f, 1f, 1f),   // top - magenta
+            floatArrayOf(0.5f, 1f, 1f, 1f)    // bottom - cyan
         )
+
+        val faceIndices = arrayOf(
+            shortArrayOf(0, 1, 2, 1, 3, 2),     // front
+            shortArrayOf(4, 5, 6, 5, 7, 6),     // back
+            shortArrayOf(4, 0, 6, 0, 2, 6),     // left
+            shortArrayOf(1, 5, 3, 5, 7, 3),     // right
+            shortArrayOf(4, 5, 0, 5, 1, 0),     // top
+            shortArrayOf(2, 3, 6, 3, 7, 6)      // bottom
+        )
+
+        val colors = mutableListOf<Float>()
+        val drawOrder = mutableListOf<Short>()
+
+        for (i in faceIndices.indices) {
+            val color = faceColors[i]
+            for (j in faceIndices[i]) {
+                drawOrder.add(j)
+                colors.addAll(color.toList())
+            }
+        }
 
         vertexBuffer = ByteBuffer.allocateDirect(cubeCoords.size * 4)
             .order(ByteOrder.nativeOrder()).asFloatBuffer().apply {
@@ -65,7 +89,13 @@ class Cube(x: Float, y: Float, z: Float, size: Float = 1.0f, val color: FloatArr
 
         drawListBuffer = ByteBuffer.allocateDirect(drawOrder.size * 2)
             .order(ByteOrder.nativeOrder()).asShortBuffer().apply {
-                put(drawOrder)
+                drawOrder.forEach { put(it) }
+                position(0)
+            }
+
+        colorBuffer = ByteBuffer.allocateDirect(colors.size * 4)
+            .order(ByteOrder.nativeOrder()).asFloatBuffer().apply {
+                colors.forEach { put(it) }
                 position(0)
             }
 
@@ -94,15 +124,18 @@ class Cube(x: Float, y: Float, z: Float, size: Float = 1.0f, val color: FloatArr
         GLES20.glEnableVertexAttribArray(positionHandle)
         GLES20.glVertexAttribPointer(positionHandle, 3, GLES20.GL_FLOAT, false, 3 * 4, vertexBuffer)
 
-        val colorHandle = GLES20.glGetUniformLocation(program, "vColor")
-        GLES20.glUniform4fv(colorHandle, 1, color, 0)
+        val colorHandle = GLES20.glGetAttribLocation(program, "aColor")
+        GLES20.glEnableVertexAttribArray(colorHandle)
+        GLES20.glVertexAttribPointer(colorHandle, 4, GLES20.GL_FLOAT, false, 4 * 4, colorBuffer)
 
         val mvpMatrixHandle = GLES20.glGetUniformLocation(program, "uMVPMatrix")
         Matrix.multiplyMM(mvpMatrix, 0, vpMatrix, 0, modelMatrix, 0)
         GLES20.glUniformMatrix4fv(mvpMatrixHandle, 1, false, mvpMatrix, 0)
 
         GLES20.glDrawElements(GLES20.GL_TRIANGLES, drawListBuffer.capacity(), GLES20.GL_UNSIGNED_SHORT, drawListBuffer)
+
         GLES20.glDisableVertexAttribArray(positionHandle)
+        GLES20.glDisableVertexAttribArray(colorHandle)
     }
 
     private fun loadShader(type: Int, code: String): Int {

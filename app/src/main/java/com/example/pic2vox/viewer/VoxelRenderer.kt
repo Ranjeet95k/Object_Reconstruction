@@ -29,9 +29,9 @@ class VoxelRenderer(private val grid: Array<Array<BooleanArray>>) : GLSurfaceVie
     private val vpMatrix = FloatArray(16)
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
-        GLES20.glClearColor(0.1f, 0.1f, 0.15f, 1f)
-        GLES20.glEnable(GLES20.GL_DEPTH_TEST)
-        GLES20.glEnable(GLES20.GL_CULL_FACE)
+        GLES20.glClearColor(0.85f, 0.85f, 0.85f, 1f)
+        GLES20.glDisable(GLES20.GL_DEPTH_TEST)
+        GLES20.glDisable(GLES20.GL_CULL_FACE)
 
         val sizeX = grid.size
         val sizeY = grid[0].size
@@ -54,8 +54,8 @@ class VoxelRenderer(private val grid: Array<Array<BooleanArray>>) : GLSurfaceVie
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
         GLES20.glViewport(0, 0, width, height)
-        val ratio = width.toFloat() / height
-        Matrix.frustumM(projectionMatrix, 0, -ratio, ratio, -1f, 1f, 3f, 500f)
+        val size = 20f
+        Matrix.orthoM(projectionMatrix, 0, -size, size, -size, size, -500f, 500f)
     }
 
     override fun onDrawFrame(gl: GL10?) {
