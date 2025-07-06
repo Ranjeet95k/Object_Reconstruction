@@ -96,6 +96,9 @@ dependencies {
     implementation ("androidx.compose.material3:material3:1.1.1")
     implementation ("org.rajawali3d:rajawali:1.2.1970")
 
+    implementation("androidx.compose.material:material-icons-extended:1.6.1")
+
+
 
 
 }
