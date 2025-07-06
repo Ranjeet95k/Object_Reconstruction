@@ -1,4 +1,3 @@
-// Cube.kt
 package com.example.pic2vox.viewer
 
 import android.opengl.GLES20
@@ -42,24 +41,22 @@ class Cube(x: Float, y: Float, z: Float, size: Float = 1.0f) {
         val half = size / 2f
 
         val cubeCoords = floatArrayOf(
-            -half,  half,  half,   // front top left     0
-            half,  half,  half,   // front top right    1
-            -half, -half,  half,   // front bottom left  2
-            half, -half,  half,   // front bottom right 3
-            -half,  half, -half,   // back top left      4
-            half,  half, -half,   // back top right     5
-            -half, -half, -half,   // back bottom left   6
-            half, -half, -half    // back bottom right  7
+            -half,  half,  half,   // 0 front top left
+            half,  half,  half,   // 1 front top right
+            -half, -half,  half,   // 2 front bottom left
+            half, -half,  half,   // 3 front bottom right
+            -half,  half, -half,   // 4 back top left
+            half,  half, -half,   // 5 back top right
+            -half, -half, -half,   // 6 back bottom left
+            half, -half, -half    // 7 back bottom right
         )
 
-        val faceColors = arrayOf(
-            floatArrayOf(1f, 0.5f, 0.5f, 1f), // front - red
-            floatArrayOf(0.5f, 1f, 0.5f, 1f), // back - green
-            floatArrayOf(0.5f, 0.5f, 1f, 1f), // left - blue
-            floatArrayOf(1f, 1f, 0.5f, 1f),   // right - yellow
-            floatArrayOf(1f, 0.5f, 1f, 1f),   // top - magenta
-            floatArrayOf(0.5f, 1f, 1f, 1f)    // bottom - cyan
-        )
+        // Define distinct colors for each face type
+        val frontColor = floatArrayOf(0.41f, 0.41f, 0.41f, 1f)        // Light gray for front
+        val backColor = floatArrayOf(0.97f, 0.97f, 0.82f, 1f)          // Light yellow for back
+        val leftRightColor = floatArrayOf(0.6f, 0.6f, 0.8f, 1f)      // Light blue for sides
+        val topColor = floatArrayOf(0.56f, 0.56f, 0.56f, 1f)           // Brown for top
+        val bottomColor = floatArrayOf(0.56f, 0.56f, 0.56f, 1f)        // Dark gray for bottom
 
         val faceIndices = arrayOf(
             shortArrayOf(0, 1, 2, 1, 3, 2),     // front
@@ -68,6 +65,15 @@ class Cube(x: Float, y: Float, z: Float, size: Float = 1.0f) {
             shortArrayOf(1, 5, 3, 5, 7, 3),     // right
             shortArrayOf(4, 5, 0, 5, 1, 0),     // top
             shortArrayOf(2, 3, 6, 3, 7, 6)      // bottom
+        )
+
+        val faceColors = arrayOf(
+            frontColor,     // front
+            backColor,      // back
+            leftRightColor, // left
+            leftRightColor, // right
+            topColor,       // top
+            bottomColor     // bottom
         )
 
         val colors = mutableListOf<Float>()
@@ -120,6 +126,7 @@ class Cube(x: Float, y: Float, z: Float, size: Float = 1.0f) {
 
     fun draw(vpMatrix: FloatArray) {
         GLES20.glUseProgram(program)
+
         val positionHandle = GLES20.glGetAttribLocation(program, "vPosition")
         GLES20.glEnableVertexAttribArray(positionHandle)
         GLES20.glVertexAttribPointer(positionHandle, 3, GLES20.GL_FLOAT, false, 3 * 4, vertexBuffer)

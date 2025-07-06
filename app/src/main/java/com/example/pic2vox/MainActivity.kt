@@ -128,7 +128,7 @@ class MainActivity : ComponentActivity() {
                                         }
 
                                         val gridSize = 32
-                                        val threshold = 0.2f
+                                        val threshold = 0.12f
                                         val voxelData = voxelTensor.dataAsFloatArray
 
                                         val voxelGrid = Array(gridSize) {
