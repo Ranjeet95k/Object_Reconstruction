@@ -60,7 +60,7 @@ class MainActivity : ComponentActivity() {
             val context = LocalContext.current
             var showSplash by remember { mutableStateOf(true) }
             var darkTheme by remember { mutableStateOf(false) }
-            var processingTime by remember { mutableStateOf(0L) }
+            var processingTime by remember { mutableLongStateOf(0L) }
 
             LaunchedEffect(Unit) {
                 delay(2000)

@@ -24,6 +24,8 @@ class CameraCaptureManager(
     private lateinit var outputDirectory: File
     private val cameraExecutor: Executor = ContextCompat.getMainExecutor(context)
 
+    var camera: Camera? = null  // Needed for zoom/focus
+
     fun setupCamera(previewView: PreviewView): ImageCapture {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
         val imageCaptureBuilder = ImageCapture.Builder()
@@ -41,7 +43,7 @@ class CameraCaptureManager(
             val cameraProvider = cameraProviderFuture.get()
             try {
                 cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(
+                camera = cameraProvider.bindToLifecycle(
                     lifecycleOwner, cameraSelector, preview, imageCapture
                 )
             } catch (exc: Exception) {
@@ -90,6 +92,4 @@ class CameraCaptureManager(
         val scale = maxSize.toFloat() / maxOf(width, height)
         return this.scale((width * scale).toInt(), (height * scale).toInt())
     }
-
-
 }

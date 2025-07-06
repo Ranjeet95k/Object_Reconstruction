@@ -61,8 +61,8 @@ class ModelRunner(context: Context) {
 
     fun release() {
         encoder.destroy()
-//        decoder.destroy()
-//        merger.destroy()
+        decoder.destroy()
+        merger.destroy()
     }
 
     private fun assetFilePath(context: Context, assetName: String): String {
