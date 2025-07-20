@@ -5,12 +5,14 @@ This project is an Android app that performs **offline 3D reconstruction of obje
 <p align="center">
   <img src="sampleImage/input1.jpg" width="300" />
   <img src="sampleImage/input2.jpg" width="300" />
-  <img src="sampleImage/input3.jpg" width="300" />
-  <img src="sampleImages/outputview1.jpg" width="300" />
-  <img src="sampleImages/outputview2.jpg" width="300" />
-  <img src="sampleImages/outputview3.jpg" width="300" />
-  <img src="sampleImages/outputview4.jpg" width="300" />
-  
+  <img src="sampleImage/input3.jpg" width="300" />  
+</p>
+<p align="center">
+  <img src="sampleImage/outputview1.jpg" width="300" />
+  <img src="sampleImage/outputview2.jpg" width="300" />
+  <img src="sampleImage/outputview3.jpg" width="300" />
+  <img src="sampleImage/outputview4.jpg" width="300" />
+ 
 </p>
 
 ---
