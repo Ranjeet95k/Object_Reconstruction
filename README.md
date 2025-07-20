@@ -10,7 +10,7 @@ This project is an Android app that performs **offline 3D reconstruction of obje
 <p align="center">
   <img src="sampleImage/outputview1.jpg" width="300" />
   <img src="sampleImage/outputview2.jpg" width="300" />
-<!--   <img src="sampleImage/outputview3.jpg" width="300" /> -->
+  <img src="sampleImage/outputview3.jpg" width="300" />
   <img src="sampleImage/outputview4.jpg" width="300" />
  
 </p>
